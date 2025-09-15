@@ -2,7 +2,12 @@
 
 A decentralized finance (DeFi) token staking platform built with React, Hardhat, and Solidity. Users can stake tokens to earn rewards over time with a built-in lockup period for security.
 
-![DeFi Staking Platform](https://img.shields.io/badge/DeFi-Staking-blue) ![React](https://img.shields.io/badge/React-18.2-blue) ![Solidity](https://img.shields.io/badge/Solidity-0.8.19-green) ![Hardhat](https://img.shields.io/badge/Hardhat-2.19-orange)
+[![GitHub Stars](https://img.shields.io/github/stars/blaccdante/defi-staking-platform?style=social)](https://github.com/blaccdante/defi-staking-platform/stargazers)
+[![GitHub Forks](https://img.shields.io/github/forks/blaccdante/defi-staking-platform?style=social)](https://github.com/blaccdante/defi-staking-platform/network/members)
+[![GitHub Issues](https://img.shields.io/github/issues/blaccdante/defi-staking-platform)](https://github.com/blaccdante/defi-staking-platform/issues)
+[![License](https://img.shields.io/github/license/blaccdante/defi-staking-platform)](https://github.com/blaccdante/defi-staking-platform/blob/main/LICENSE)
+
+![DeFi Staking Platform](https://img.shields.io/badge/DeFi-Staking-blue) ![React](https://img.shields.io/badge/React-18.2-blue) ![Solidity](https://img.shields.io/badge/Solidity-0.8.20-green) ![Hardhat](https://img.shields.io/badge/Hardhat-2.19-orange)
 
 ## ✨ Features
 
@@ -47,7 +52,7 @@ A decentralized finance (DeFi) token staking platform built with React, Hardhat,
 
 ### 1. Clone and Install
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/blaccdante/defi-staking-platform.git
 cd defi-staking-platform
 npm install
 ```
