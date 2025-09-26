@@ -11,17 +11,14 @@ export const useTheme = () => {
 }
 
 export const ThemeProvider = ({ children }) => {
-  // Check for saved theme preference or default to dark
+  // Check for saved theme preference or default to futuristic
   const [theme, setTheme] = useState(() => {
     const savedTheme = localStorage.getItem('theme')
     if (savedTheme && ['light', 'dark', 'futuristic'].includes(savedTheme)) {
       return savedTheme
     }
-    // Check system preference
-    if (typeof window !== 'undefined' && window.matchMedia) {
-      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-    }
-    return 'dark' // Default to dark theme
+    // For new users, default to futuristic theme for the DeFi experience
+    return 'futuristic' // Default to futuristic theme
   })
 
   // Update theme in localStorage and document
@@ -30,33 +27,23 @@ export const ThemeProvider = ({ children }) => {
     document.documentElement.setAttribute('data-theme', theme)
   }, [theme])
 
-  // Listen for system theme changes
+  // Listen for system theme changes (disabled to maintain futuristic default)
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.matchMedia) {
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-      const handleChange = (e) => {
-        // Only auto-switch if no theme is saved in localStorage
-        if (!localStorage.getItem('theme')) {
-          setTheme(e.matches ? 'dark' : 'light')
-        }
-      }
-      
-      mediaQuery.addEventListener('change', handleChange)
-      return () => mediaQuery.removeEventListener('change', handleChange)
-    }
+    // System theme changes disabled to prioritize futuristic theme experience
+    // Users can still manually change themes using the theme toggle
   }, [])
 
   const toggleTheme = () => {
     setTheme(prevTheme => {
       switch (prevTheme) {
-        case 'light':
+        case 'futuristic':
           return 'dark'
         case 'dark':
-          return 'futuristic'
-        case 'futuristic':
           return 'light'
+        case 'light':
+          return 'futuristic'
         default:
-          return 'dark'
+          return 'futuristic'
       }
     })
   }

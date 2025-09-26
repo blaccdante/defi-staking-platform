@@ -105,13 +105,15 @@
   --border-tertiary: rgba(0, 255, 65, 0.25);
   --border-glow: rgba(0, 255, 255, 0.6);
   
-  /* Futuristic Text Colors */
+  /* Futuristic Text Colors - Enhanced Visibility */
   --text-primary: #ffffff;
-  --text-secondary: rgba(255, 255, 255, 0.9);
-  --text-tertiary: rgba(0, 255, 255, 0.8);
-  --text-quaternary: rgba(255, 255, 255, 0.6);
+  --text-secondary: #e0e0e0;
+  --text-tertiary: #00ffff;
+  --text-quaternary: #b0b0b0;
   --text-accent: var(--neon-cyan);
   --text-neon: var(--neon-magenta);
+  --text-muted: #888888;
+  --text-bright: #f0f0f0;
   
   /* Cyberpunk Brand Colors */
   --brand-primary: linear-gradient(135deg, #00ffff 0%, #0080ff 25%, #8000ff 50%, #ff00ff 100%);
@@ -173,6 +175,170 @@
   --glow-secondary: 0 0 20px rgba(255, 0, 255, 0.5), 0 0 40px rgba(255, 0, 255, 0.3), 0 0 80px rgba(255, 0, 255, 0.1);
   --glow-success: 0 0 20px rgba(0, 255, 65, 0.5), 0 0 40px rgba(0, 255, 65, 0.3), 0 0 80px rgba(0, 255, 65, 0.1);
   --shadow-glow: var(--glow-primary);
+  
+  /* Text Shadow for Better Readability */
+  --text-shadow-primary: 0 0 10px rgba(0, 255, 255, 0.5), 0 1px 3px rgba(0, 0, 0, 0.8);
+  --text-shadow-secondary: 0 0 8px rgba(255, 255, 255, 0.3), 0 1px 2px rgba(0, 0, 0, 0.7);
+  --text-shadow-glow: 0 0 15px currentColor, 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+/* Enhanced Text Visibility for Futuristic Theme */
+:root[data-theme="futuristic"] {
+  
+  /* Base typography improvements */
+  body {
+    font-family: var(--font-futuristic-body);
+    color: var(--text-primary);
+    text-shadow: var(--text-shadow-secondary);
+    font-weight: 400;
+    line-height: 1.6;
+  }
+  
+  /* Heading improvements */
+  h1, h2, h3, h4, h5, h6,
+  .main-title, .section-title, .form-title {
+    font-family: var(--font-futuristic-display);
+    color: var(--text-primary);
+    text-shadow: var(--text-shadow-primary);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  
+  /* Subtitle and secondary text */
+  .main-subtitle, .section-subtitle,
+  .text-secondary, .text-muted {
+    color: var(--text-secondary) !important;
+    text-shadow: var(--text-shadow-secondary);
+    font-weight: 400;
+  }
+  
+  /* Navigation and button text */
+  .nav-tab, .btn, button {
+    color: var(--text-primary);
+    text-shadow: var(--text-shadow-secondary);
+    font-weight: 500;
+    font-family: var(--font-futuristic-body);
+  }
+  
+  /* Form labels and inputs */
+  .form-label-enhanced, label {
+    color: var(--text-tertiary) !important;
+    text-shadow: var(--text-shadow-glow);
+    font-weight: 500;
+    font-family: var(--font-futuristic-body);
+  }
+  
+  .form-input-enhanced, input, textarea {
+    color: var(--text-primary) !important;
+    background: rgba(0, 20, 30, 0.8) !important;
+    border: 1px solid var(--border-primary) !important;
+    text-shadow: none;
+    font-family: var(--font-futuristic-body);
+  }
+  
+  .form-input-enhanced::placeholder,
+  input::placeholder, textarea::placeholder {
+    color: var(--text-quaternary) !important;
+    opacity: 0.8;
+  }
+  
+  /* Wallet address and monospace text */
+  .wallet-address, .font-mono, code {
+    font-family: var(--font-futuristic-mono) !important;
+    color: var(--neon-cyan) !important;
+    text-shadow: var(--text-shadow-glow);
+    font-weight: 500;
+    background: rgba(0, 255, 255, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid rgba(0, 255, 255, 0.2);
+  }
+  
+  /* Status indicators */
+  .text-green-600, .success {
+    color: var(--neon-green) !important;
+    text-shadow: var(--text-shadow-glow);
+    font-weight: 500;
+  }
+  
+  .text-yellow-600, .text-yellow-500, .warning {
+    color: var(--neon-yellow) !important;
+    text-shadow: var(--text-shadow-glow);
+    font-weight: 500;
+  }
+  
+  .text-red-600, .error {
+    color: var(--neon-pink) !important;
+    text-shadow: var(--text-shadow-glow);
+    font-weight: 500;
+  }
+  
+  /* Enhanced cards and panels */
+  .feature-card, .form-section, .wallet-info {
+    background: rgba(10, 10, 25, 0.9) !important;
+    border: 1px solid var(--border-primary) !important;
+    box-shadow: var(--shadow-holographic);
+  }
+  
+  /* Alert boxes with better contrast */
+  .alert {
+    border: 1px solid !important;
+    backdrop-filter: blur(10px);
+  }
+  
+  .alert-info {
+    background: rgba(0, 255, 255, 0.15) !important;
+    border-color: var(--info-border) !important;
+    color: var(--text-primary) !important;
+  }
+  
+  .alert-warning {
+    background: rgba(255, 255, 0, 0.15) !important;
+    border-color: var(--warning-border) !important;
+    color: var(--text-primary) !important;
+  }
+  
+  .alert-success {
+    background: rgba(0, 255, 65, 0.15) !important;
+    border-color: var(--success-border) !important;
+    color: var(--text-primary) !important;
+  }
+  
+  /* Navigation tabs enhancement */
+  .nav-tab.active {
+    color: var(--neon-cyan) !important;
+    text-shadow: var(--text-shadow-glow);
+    border-bottom: 2px solid var(--neon-cyan) !important;
+    background: rgba(0, 255, 255, 0.1) !important;
+  }
+  
+  /* Button enhancements */
+  .btn-primary, .btn-primary-enhanced {
+    background: linear-gradient(135deg, rgba(0, 255, 255, 0.2) 0%, rgba(0, 128, 255, 0.3) 100%) !important;
+    border: 1px solid var(--neon-cyan) !important;
+    color: var(--text-primary) !important;
+    text-shadow: var(--text-shadow-glow);
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+  }
+  
+  .btn-secondary, .btn-secondary-enhanced {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    color: var(--text-primary) !important;
+    text-shadow: var(--text-shadow-secondary);
+  }
+  
+  /* Link styling */
+  a, .underline {
+    color: var(--neon-cyan) !important;
+    text-shadow: var(--text-shadow-glow);
+    text-decoration-color: var(--neon-cyan);
+  }
+  
+  a:hover, .underline:hover {
+    color: var(--neon-magenta) !important;
+    text-shadow: 0 0 15px var(--neon-magenta);
+  }
 }
 
 /* Light Futuristic Theme Override - Clean Tech (not used when futuristic is active) */

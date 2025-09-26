@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Test</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            max-width: 600px; 
+            margin: 50px auto; 
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+        .test-result { 
+            padding: 10px; 
+            margin: 10px 0; 
+            border-radius: 5px; 
+        }
+        .success { background: #10b981; }
+        .error { background: #ef4444; }
+        .info { background: #3b82f6; }
+        button { 
+            background: #10b981; 
+            color: white; 
+            border: none; 
+            padding: 10px 20px; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            margin: 5px;
+        }
+        input { 
+            padding: 8px; 
+            margin: 5px 0; 
+            border-radius: 4px; 
+            border: 1px solid #333;
+            background: #2a2a2a;
+            color: white;
+            width: 100%;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔥 Firebase Connection Test</h1>
+    <div id="results"></div>
+    
+    <div>
+        <h3>Test Account Creation</h3>
+        <input type="email" id="email" placeholder="test@example.com" value="test@example.com">
+        <input type="password" id="password" placeholder="password123" value="password123">
+        <input type="text" id="username" placeholder="testuser" value="testuser">
+        <br>
+        <button onclick="testSignup()">Test Signup</button>
+        <button onclick="testLogin()">Test Login</button>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAA14SmhFtD-5glZ53T8T1_dn3BRAy-U",
+            authDomain: "defi-staking-platform.firebaseapp.com",
+            projectId: "defi-staking-platform",
+            storageBucket: "defi-staking-platform.firebasestorage.app",
+            messagingSenderId: "688919996953",
+            appId: "1:688919996953:web:dfd94df56ed2eb644a588B"
+        };
+
+        function addResult(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.innerHTML = message;
+            document.getElementById('results').appendChild(div);
+        }
+
+        try {
+            addResult('🔥 Initializing Firebase...', 'info');
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+            const db = getFirestore(app);
+            
+            addResult('✅ Firebase initialized successfully!', 'success');
+            addResult('✅ Auth service connected', 'success');
+            addResult('✅ Firestore connected', 'success');
+
+            window.testSignup = async () => {
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                const username = document.getElementById('username').value;
+
+                try {
+                    addResult(`🚀 Attempting to create account: ${email}`, 'info');
+                    
+                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                    const user = userCredential.user;
+                    
+                    addResult(`✅ User created successfully! UID: ${user.uid}`, 'success');
+
+                    // Create user document
+                    await setDoc(doc(db, 'users', user.uid), {
+                        uid: user.uid,
+                        username: username,
+                        email: user.email,
+                        createdAt: new Date().toISOString()
+                    });
+
+                    addResult('✅ User document created in Firestore!', 'success');
+                    
+                } catch (error) {
+                    addResult(`❌ Signup Error: ${error.code} - ${error.message}`, 'error');
+                    console.error('Full error:', error);
+                }
+            };
+
+            window.testLogin = async () => {
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+
+                try {
+                    addResult(`🔐 Attempting to login: ${email}`, 'info');
+                    
+                    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                    const user = userCredential.user;
+                    
+                    addResult(`✅ Login successful! UID: ${user.uid}`, 'success');
+                    
+                } catch (error) {
+                    addResult(`❌ Login Error: ${error.code} - ${error.message}`, 'error');
+                    console.error('Full error:', error);
+                }
+            };
+
+        } catch (error) {
+            addResult(`❌ Firebase initialization failed: ${error.message}`, 'error');
+            console.error('Firebase init error:', error);
+        }
+    </script>
+</body>
+</html>

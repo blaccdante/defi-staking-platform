@@ -13,7 +13,13 @@
     "deploy:sepolia": "hardhat run scripts/deploy.js --network sepolia",
     "node": "hardhat node"
   },
-  "keywords": ["defi", "staking", "ethereum", "web3", "react"],
+  "keywords": [
+    "defi",
+    "staking",
+    "ethereum",
+    "web3",
+    "react"
+  ],
   "author": "Danny",
   "license": "MIT",
   "devDependencies": {
@@ -25,6 +31,7 @@
   "dependencies": {
     "@openzeppelin/contracts": "^5.0.1",
     "ethers": "^6.10.0",
+    "firebase": "^12.3.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hot-toast": "^2.4.1"

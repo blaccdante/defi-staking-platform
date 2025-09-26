@@ -63,14 +63,14 @@ const ThemeToggle = () => {
 
   const getNextTheme = () => {
     switch (theme) {
-      case 'light':
+      case 'futuristic':
         return 'dark'
       case 'dark':
-        return 'futuristic'
-      case 'futuristic':
         return 'light'
+      case 'light':
+        return 'futuristic'
       default:
-        return 'dark'
+        return 'futuristic'
     }
   }
 
@@ -83,7 +83,7 @@ const ThemeToggle = () => {
       case 'futuristic':
         return <CyberIcon />
       default:
-        return <MoonIcon />
+        return <CyberIcon />
     }
   }
 

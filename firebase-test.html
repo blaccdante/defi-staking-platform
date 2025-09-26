@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Test</title>
+</head>
+<body>
+    <h1>Firebase Authentication Test</h1>
+    <div id="result"></div>
+    <div>
+        <input type="email" id="email" placeholder="Email" value="test@example.com">
+        <input type="password" id="password" placeholder="Password" value="123456">
+        <button onclick="testSignup()">Test Signup</button>
+        <button onclick="testLogin()">Test Login</button>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { 
+            getAuth, 
+            createUserWithEmailAndPassword, 
+            signInWithEmailAndPassword 
+        } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { 
+            getFirestore, 
+            doc, 
+            setDoc 
+        } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAA14SmhFtD-5glZ53T8T1_dn3BRAy-U",
+            authDomain: "defi-staking-platform.firebaseapp.com",
+            projectId: "defi-staking-platform",
+            storageBucket: "defi-staking-platform.firebasestorage.app",
+            messagingSenderId: "688919996953",
+            appId: "1:688919996953:web:dfd94df56ed2eb644a588B"
+        };
+
+        const result = document.getElementById('result');
+
+        try {
+            // Initialize Firebase
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+            const db = getFirestore(app);
+            
+            result.innerHTML = '✅ Firebase initialized successfully!<br>';
+            
+            // Make functions global so buttons can access them
+            window.testSignup = async () => {
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                
+                try {
+                    result.innerHTML += `🔥 Attempting signup with ${email}...<br>`;
+                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                    const user = userCredential.user;
+                    
+                    result.innerHTML += `✅ User created: ${user.uid}<br>`;
+                    
+                    // Try to create Firestore document
+                    const userDoc = {
+                        uid: user.uid,
+                        email: user.email,
+                        createdAt: new Date().toISOString()
+                    };
+                    
+                    await setDoc(doc(db, 'users', user.uid), userDoc);
+                    result.innerHTML += `✅ Firestore document created!<br>`;
+                    
+                } catch (error) {
+                    result.innerHTML += `❌ Signup error: ${error.code} - ${error.message}<br>`;
+                    console.error('Signup error:', error);
+                }
+            };
+            
+            window.testLogin = async () => {
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                
+                try {
+                    result.innerHTML += `🔑 Attempting login with ${email}...<br>`;
+                    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                    const user = userCredential.user;
+                    
+                    result.innerHTML += `✅ User logged in: ${user.uid}<br>`;
+                } catch (error) {
+                    result.innerHTML += `❌ Login error: ${error.code} - ${error.message}<br>`;
+                    console.error('Login error:', error);
+                }
+            };
+            
+        } catch (error) {
+            result.innerHTML = `❌ Firebase initialization error: ${error.message}<br>`;
+            console.error('Firebase init error:', error);
+        }
+    </script>
+</body>
+</html>

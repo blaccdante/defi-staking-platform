@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { ethers } from 'ethers'
 import { toast, Toaster } from 'react-hot-toast'
 import { ThemeProvider } from './contexts/ThemeContext'
+import { FirebaseProvider } from './contexts/FirebaseContext'
 import ThemeToggle from './components/ThemeToggle'
 import AnimatedBackground from './components/AnimatedBackground'
 import FuturisticBackground from './components/FuturisticBackground'
@@ -14,6 +15,7 @@ import StakingPools from './components/StakingPools'
 import PortfolioManager from './components/PortfolioManager'
 import AuthSystem from './components/AuthSystem'
 import CryptoMarketDashboard from './components/CryptoMarketDashboard'
+import AccountManager from './components/AccountManager'
 import './professional-theme.css'
 import './modern-tech-theme.css'
 import './futuristic-theme.css'
@@ -273,7 +275,8 @@ function App() {
 
   return (
     <ThemeProvider>
-      <div className="app">
+      <FirebaseProvider>
+        <div className="app">
         <AnimatedBackground />
         <FuturisticBackground />
         
@@ -296,6 +299,15 @@ function App() {
             <BlaccMannyLogo size="small" />
           </div>
           <div className="nav-actions">
+            {user && user.isAuthenticated && (
+              <button
+                onClick={() => setActiveTab('account')}
+                className={`btn btn-small ${activeTab === 'account' ? 'btn-primary' : 'btn-secondary'} mr-3`}
+                title={user.walletOnly ? 'Create Account' : 'Account Settings'}
+              >
+                {user.walletOnly ? '✨ Create Account' : '📝 Account'}
+              </button>
+            )}
             <ThemeToggle />
           </div>
         </nav>
@@ -322,28 +334,47 @@ function App() {
                   <div>
                     <div className="text-sm text-secondary">Welcome</div>
                     <div className="font-semibold">
-                      {user?.username || 'Anonymous User'}
+                      {user?.username || 'Wallet User'}
+                      {user?.walletOnly && <span className="text-xs text-yellow-500 ml-1">(Wallet Only)</span>}
                     </div>
                   </div>
                   <div>
                     <div className="text-sm text-secondary">Wallet</div>
                     <div className="wallet-address">
-                      {account.slice(0, 6)}...{account.slice(-4)}
+                      {user?.address?.slice(0, 6)}...{user?.address?.slice(-4)}
                     </div>
                   </div>
                   <div>
                     <div className="text-sm text-secondary">Network</div>
                     <div className="font-medium">
-                      {chainId === 1337 ? 'Localhost' : `Chain ID: ${chainId}`}
+                      {user?.chainId === 1337 ? 'Localhost' : `Chain ID: ${user?.chainId}`}
                     </div>
                   </div>
+                  {user?.walletOnly && (
+                    <div className="alert alert-warning py-2 px-3 text-xs">
+                      <span className="text-yellow-600">⚠️ Wallet-only access</span>
+                      <button
+                        onClick={() => setActiveTab('account')}
+                        className="text-yellow-700 underline ml-2"
+                      >
+                        Create Account
+                      </button>
+                    </div>
+                  )}
                 </div>
-                <button 
-                  onClick={handleLogout}
-                  className="btn btn-secondary btn-small"
-                >
-                  Logout
-                </button>
+                <div className="flex gap-2">
+                  {!user?.walletOnly && user?.email && (
+                    <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded">
+                      ✅ Full Account
+                    </span>
+                  )}
+                  <button 
+                    onClick={handleLogout}
+                    className="btn btn-secondary btn-small"
+                  >
+                    Disconnect
+                  </button>
+                </div>
               </div>
 
               {/* Navigation Tabs */}
@@ -384,6 +415,15 @@ function App() {
                   Analytics
                 </button>
               </div>
+
+              {/* Account Manager */}
+              {activeTab === 'account' && (
+                <AccountManager 
+                  user={user}
+                  onAccountCreated={handleAuthentication}
+                  onClose={() => setActiveTab('market')}
+                />
+              )}
 
               {/* Always show market and portfolio, only show staking features when contracts are loaded */}
               {activeTab === 'market' && (
@@ -447,8 +487,10 @@ function App() {
               )}
             </>
           )}
+          </div>
         </div>
-      </div>
+        
+      </FirebaseProvider>
     </ThemeProvider>
   )
 }

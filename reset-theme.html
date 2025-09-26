@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Reset Theme to Futuristic</title>
+</head>
+<body>
+    <h1>Resetting Theme to Futuristic...</h1>
+    <p id="status">Processing...</p>
+    
+    <script>
+        // Clear any existing theme preference and set to futuristic
+        localStorage.removeItem('theme')
+        localStorage.setItem('theme', 'futuristic')
+        document.documentElement.setAttribute('data-theme', 'futuristic')
+        
+        document.getElementById('status').innerHTML = '✅ Theme reset to futuristic! You can close this tab.'
+        
+        setTimeout(() => {
+            window.close()
+        }, 2000)
+    </script>
+</body>
+</html>
