@@ -3,6 +3,36 @@ import { ethers } from 'ethers'
 import { toast } from 'react-hot-toast'
 
 const StakingInterface = ({ contracts, account }) => {
+  // Professional Icons
+  const StakeIcon = () => (
+    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+    </svg>
+  )
+
+  const WithdrawIcon = () => (
+    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+    </svg>
+  )
+
+  const RewardIcon = () => (
+    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+    </svg>
+  )
+
+  const ClockIcon = () => (
+    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  )
+
+  const CheckIcon = () => (
+    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+    </svg>
+  )
   const [stakeAmount, setStakeAmount] = useState('')
   const [withdrawAmount, setWithdrawAmount] = useState('')
   const [loading, setLoading] = useState({})
@@ -203,14 +233,21 @@ const StakingInterface = ({ contracts, account }) => {
   }
 
   return (
-    <div className="staking-grid">
+    <div className="responsive-grid-2">
       {/* Stake Section */}
-      <div className="card">
-        <h3>💰 Stake Tokens</h3>
-        <p>Stake your STK tokens to earn RWD rewards</p>
+      <div className="form-section">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="feature-icon" style={{ width: '48px', height: '48px', background: 'var(--success-bg)', color: 'var(--success-text)' }}>
+            <StakeIcon />
+          </div>
+          <div>
+            <h3 className="form-title mb-2">Stake Tokens</h3>
+            <p className="text-sm text-secondary mb-0">Stake STK tokens to earn RWD rewards</p>
+          </div>
+        </div>
         
-        <div className="form-group">
-          <label>Amount to Stake (STK)</label>
+        <div className="form-group-enhanced">
+          <label className="form-label-enhanced">Amount to Stake (STK)</label>
           <div className="input-group">
             <input
               type="number"
@@ -219,25 +256,38 @@ const StakingInterface = ({ contracts, account }) => {
               placeholder="Enter amount..."
               min="0"
               step="0.01"
+              className="form-input-enhanced"
             />
             <button 
               onClick={handleStake}
               disabled={loading.stake}
-              className="primary"
+              className="btn-enhanced btn-primary-enhanced btn-medium"
             >
-              {loading.stake ? <div className="loading"></div> : 'Stake'}
+              {loading.stake ? <div className="loading-enhanced"></div> : (
+                <>
+                  <StakeIcon />
+                  Stake
+                </>
+              )}
             </button>
           </div>
         </div>
       </div>
 
       {/* Withdraw Section */}
-      <div className="card">
-        <h3>🏦 Withdraw Tokens</h3>
-        <p>Withdraw your staked tokens (min 7 days)</p>
+      <div className="form-section">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="feature-icon" style={{ width: '48px', height: '48px', background: 'var(--warning-bg)', color: 'var(--warning-text)' }}>
+            <WithdrawIcon />
+          </div>
+          <div>
+            <h3 className="form-title mb-2">Withdraw Tokens</h3>
+            <p className="text-sm text-secondary mb-0">Withdraw your staked tokens (min 7 days)</p>
+          </div>
+        </div>
         
-        <div className="form-group">
-          <label>Amount to Withdraw (STK)</label>
+        <div className="form-group-enhanced">
+          <label className="form-label-enhanced">Amount to Withdraw (STK)</label>
           <div className="input-group">
             <input
               type="number"
@@ -247,56 +297,109 @@ const StakingInterface = ({ contracts, account }) => {
               min="0"
               step="0.01"
               max={stakingInfo.staked}
+              className="form-input-enhanced"
             />
             <button 
               onClick={handleWithdraw}
               disabled={loading.withdraw || !stakingInfo.canWithdraw}
-              className="secondary"
+              className="btn-enhanced btn-secondary-enhanced btn-medium"
             >
-              {loading.withdraw ? <div className="loading"></div> : 'Withdraw'}
+              {loading.withdraw ? <div className="loading-enhanced"></div> : (
+                <>
+                  <WithdrawIcon />
+                  Withdraw
+                </>
+              )}
             </button>
           </div>
         </div>
         
-        <div style={{ marginTop: '1rem', fontSize: '0.9rem' }}>
-          <div>Staked: {formatNumber(stakingInfo.staked)} STK</div>
-          <div className={stakingInfo.canWithdraw ? 'can-withdraw' : 'countdown'}>
-            {getRemainingTime()}
+        {/* Staking Status */}
+        <div className="mt-4 p-3 rounded-lg" style={{ background: 'var(--surface-secondary)', border: '1px solid var(--border-primary)' }}>
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm text-secondary">Staked Balance</span>
+            <span className="font-mono font-semibold">{formatNumber(stakingInfo.staked)} STK</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-secondary">Lock Status</span>
+            <div className="flex items-center gap-2">
+              {stakingInfo.canWithdraw ? (
+                <>
+                  <CheckIcon />
+                  <span className="status-badge status-success">Can Withdraw</span>
+                </>
+              ) : (
+                <>
+                  <ClockIcon />
+                  <span className="status-badge status-warning">{getRemainingTime()}</span>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Rewards Section */}
-      <div className="card" style={{ gridColumn: 'span 2' }}>
-        <h3>🎁 Claim Rewards</h3>
-        <p>Claim your accumulated RWD rewards</p>
-        
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+      {/* Rewards Section - Full Width */}
+      <div className="form-section" style={{ gridColumn: 'span 2' }}>
+        <div className="flex items-center gap-3 mb-6">
+          <div className="feature-icon" style={{ width: '48px', height: '48px', background: 'var(--info-bg)', color: 'var(--info-text)' }}>
+            <RewardIcon />
+          </div>
           <div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#667eea' }}>
-              {formatNumber(stakingInfo.earned)} RWD
+            <h3 className="form-title mb-2">Claim Rewards</h3>
+            <p className="text-sm text-secondary mb-0">Claim your accumulated RWD rewards</p>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Rewards Display */}
+          <div className="text-center p-6 rounded-xl" style={{ background: 'var(--surface-secondary)', border: '1px solid var(--border-primary)' }}>
+            <div className="mb-2">
+              <div className="text-3xl font-bold font-mono" style={{ background: 'var(--brand-primary)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                {formatNumber(stakingInfo.earned)}
+              </div>
+              <div className="text-sm font-medium text-secondary">RWD Available</div>
             </div>
-            <div style={{ fontSize: '0.9rem', opacity: 0.7 }}>
-              Available to claim
+            <div className="progress-bar mb-3">
+              <div 
+                className="progress-fill" 
+                style={{ width: parseFloat(stakingInfo.earned) > 0 ? '100%' : '0%' }}
+              ></div>
             </div>
+            <div className="text-xs text-tertiary">Rewards update in real-time</div>
           </div>
           
-          <div className="action-buttons">
+          {/* Action Buttons */}
+          <div className="flex flex-col gap-3 justify-center">
             <button 
               onClick={handleClaimRewards}
               disabled={loading.claim || parseFloat(stakingInfo.earned) <= 0}
-              className="primary"
+              className="btn-enhanced btn-primary-enhanced btn-large"
             >
-              {loading.claim ? <div className="loading"></div> : 'Claim Rewards'}
+              {loading.claim ? <div className="loading-enhanced"></div> : (
+                <>
+                  <RewardIcon />
+                  Claim Rewards
+                </>
+              )}
             </button>
             
             <button 
               onClick={handleExit}
               disabled={loading.exit || !stakingInfo.canWithdraw || parseFloat(stakingInfo.staked) <= 0}
-              className="secondary"
+              className="btn-enhanced btn-secondary-enhanced btn-large"
             >
-              {loading.exit ? <div className="loading"></div> : 'Exit (Withdraw All + Claim)'}
+              {loading.exit ? <div className="loading-enhanced"></div> : (
+                <>
+                  <WithdrawIcon />
+                  Exit Staking
+                </>
+              )}
             </button>
+            
+            <div className="text-xs text-tertiary text-center mt-2">
+              Exit withdraws all staked tokens and claims all rewards
+            </div>
           </div>
         </div>
       </div>

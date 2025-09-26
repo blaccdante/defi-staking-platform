@@ -1,10 +1,23 @@
 import { useState, useEffect } from 'react'
 import { ethers } from 'ethers'
 import { toast, Toaster } from 'react-hot-toast'
+import { ThemeProvider } from './contexts/ThemeContext'
+import ThemeToggle from './components/ThemeToggle'
+import AnimatedBackground from './components/AnimatedBackground'
+import FuturisticBackground from './components/FuturisticBackground'
+import BlaccMannyLogo from './components/BlaccMannyLogo'
 import WalletConnect from './components/WalletConnect'
 import StakingInterface from './components/StakingInterface'
 import StatsDisplay from './components/StatsDisplay'
-import './App.css'
+import AnalyticsDashboard from './components/AnalyticsDashboard'
+import StakingPools from './components/StakingPools'
+import PortfolioManager from './components/PortfolioManager'
+import AuthSystem from './components/AuthSystem'
+import CryptoMarketDashboard from './components/CryptoMarketDashboard'
+import './professional-theme.css'
+import './modern-tech-theme.css'
+import './futuristic-theme.css'
+import './ui-enhancements.css'
 
 function App() {
   const [provider, setProvider] = useState(null)
@@ -13,6 +26,9 @@ function App() {
   const [chainId, setChainId] = useState(null)
   const [contracts, setContracts] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [activeTab, setActiveTab] = useState('market')
+  const [user, setUser] = useState(null)
+  const [walletType, setWalletType] = useState(null)
 
   // Contract addresses (will be populated from deployments.json)
   const CONTRACT_ADDRESSES = {
@@ -56,8 +72,8 @@ function App() {
     }
   }
 
-  const connectWallet = async () => {
-    if (typeof window.ethereum === 'undefined') {
+  const connectWallet = async (walletData = null) => {
+    if (!walletData && typeof window.ethereum === 'undefined') {
       toast.error('MetaMask is not installed!')
       return
     }
@@ -65,15 +81,27 @@ function App() {
     try {
       setLoading(true)
       
-      // Request account access
-      await window.ethereum.request({
-        method: 'eth_requestAccounts'
-      })
+      let web3Provider, web3Signer, address, network
+      
+      if (walletData) {
+        // Using enhanced wallet connector
+        web3Provider = walletData.provider
+        web3Signer = walletData.signer
+        address = walletData.address
+        network = { chainId: walletData.chainId }
+        setWalletType(walletData.walletType)
+      } else {
+        // Legacy MetaMask connection
+        await window.ethereum.request({
+          method: 'eth_requestAccounts'
+        })
 
-      const web3Provider = new ethers.BrowserProvider(window.ethereum)
-      const web3Signer = await web3Provider.getSigner()
-      const address = await web3Signer.getAddress()
-      const network = await web3Provider.getNetwork()
+        web3Provider = new ethers.BrowserProvider(window.ethereum)
+        web3Signer = await web3Provider.getSigner()
+        address = await web3Signer.getAddress()
+        network = await web3Provider.getNetwork()
+        setWalletType('metamask')
+      }
 
       setProvider(web3Provider)
       setSigner(web3Signer)
@@ -154,12 +182,31 @@ function App() {
     }
   }
 
+  const handleAuthentication = (authData) => {
+    setUser(authData)
+    if (authData.provider && authData.signer) {
+      setProvider(authData.provider)
+      setSigner(authData.signer)
+      setAccount(authData.address)
+      setChainId(authData.chainId)
+      setWalletType(authData.walletType)
+      // Load contracts after authentication
+      loadContracts(authData.provider, authData.signer)
+    }
+  }
+
+  const handleLogout = () => {
+    setUser(null)
+    disconnectWallet()
+  }
+
   const disconnectWallet = () => {
     setProvider(null)
     setSigner(null)
     setAccount('')
     setChainId(null)
     setContracts(null)
+    setWalletType(null)
     toast.success('Wallet disconnected')
   }
 
@@ -187,56 +234,222 @@ function App() {
     }
   }, [])
 
+  // Modern navigation icons
+  const MarketIcon = () => (
+    <svg className="nav-tab-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+    </svg>
+  )
+
+  const PortfolioIcon = () => (
+    <svg className="nav-tab-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+    </svg>
+  )
+
+  const StakeIcon = () => (
+    <svg className="nav-tab-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+    </svg>
+  )
+
+  const PoolsIcon = () => (
+    <svg className="nav-tab-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+    </svg>
+  )
+
+  const AnalyticsIcon = () => (
+    <svg className="nav-tab-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+    </svg>
+  )
+
+  const AuthIcon = () => (
+    <svg className="nav-tab-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+    </svg>
+  )
+
   return (
-    <div className="App">
-      <Toaster position="top-right" />
-      
-      <div className="container">
-        <header>
-          <h1>🚀 DeFi Staking Platform</h1>
-          <p>Stake your tokens and earn rewards!</p>
-        </header>
+    <ThemeProvider>
+      <div className="app">
+        <AnimatedBackground />
+        <FuturisticBackground />
+        
+        <Toaster 
+          position="top-right" 
+          toastOptions={{
+            style: {
+              background: 'var(--glass-bg)',
+              color: 'var(--text-primary)',
+              border: '1px solid var(--glass-border)',
+              borderRadius: 'var(--radius-lg)',
+              backdropFilter: 'blur(20px)',
+            },
+          }}
+        />
+        
+        {/* Top Navigation Bar with Logo and Theme Toggle */}
+        <nav className="top-nav">
+          <div className="nav-brand">
+            <BlaccMannyLogo size="small" />
+          </div>
+          <div className="nav-actions">
+            <ThemeToggle />
+          </div>
+        </nav>
+        
+        <div className="container">
+          {/* Main Header - Always Visible */}
+          <header className="header-minimal">
+            <h1 className="main-title">Advanced DeFi Ecosystem</h1>
+            <p className="main-subtitle">
+              Professional staking solutions with institutional-grade security and real-time yield optimization
+            </p>
+          </header>
 
-        {!account ? (
-          <WalletConnect 
-            onConnect={connectWallet}
-            loading={loading}
-          />
-        ) : (
-          <>
-            <div className="wallet-info">
-              <div>
-                <strong>Connected Wallet:</strong>
-                <div className="address">{account}</div>
+          {!user || !user.isAuthenticated ? (
+            <AuthSystem 
+              onAuth={handleAuthentication}
+              onLogout={handleLogout}
+              user={user}
+            />
+          ) : (
+            <>
+              <div className="wallet-info">
+                <div className="flex items-center gap-4 flex-wrap">
+                  <div>
+                    <div className="text-sm text-secondary">Welcome</div>
+                    <div className="font-semibold">
+                      {user?.username || 'Anonymous User'}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-secondary">Wallet</div>
+                    <div className="wallet-address">
+                      {account.slice(0, 6)}...{account.slice(-4)}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-secondary">Network</div>
+                    <div className="font-medium">
+                      {chainId === 1337 ? 'Localhost' : `Chain ID: ${chainId}`}
+                    </div>
+                  </div>
+                </div>
+                <button 
+                  onClick={handleLogout}
+                  className="btn btn-secondary btn-small"
+                >
+                  Logout
+                </button>
               </div>
-              <div>
-                <strong>Network:</strong> {chainId === 1337 ? 'Localhost' : `Chain ID: ${chainId}`}
-              </div>
-              <button 
-                onClick={disconnectWallet}
-                className="secondary"
-                style={{ marginTop: '1rem' }}
-              >
-                Disconnect
-              </button>
-            </div>
 
-            {contracts && (
-              <>
-                <StatsDisplay 
-                  contracts={contracts}
+              {/* Navigation Tabs */}
+              <div className="nav-tabs">
+                <button
+                  onClick={() => setActiveTab('market')}
+                  className={`nav-tab ${activeTab === 'market' ? 'active' : ''}`}
+                >
+                  <MarketIcon />
+                  Market
+                </button>
+                <button
+                  onClick={() => setActiveTab('portfolio')}
+                  className={`nav-tab ${activeTab === 'portfolio' ? 'active' : ''}`}
+                >
+                  <PortfolioIcon />
+                  Portfolio
+                </button>
+                <button
+                  onClick={() => setActiveTab('stake')}
+                  className={`nav-tab ${activeTab === 'stake' ? 'active' : ''}`}
+                >
+                  <StakeIcon />
+                  Stake
+                </button>
+                <button
+                  onClick={() => setActiveTab('pools')}
+                  className={`nav-tab ${activeTab === 'pools' ? 'active' : ''}`}
+                >
+                  <PoolsIcon />
+                  Pools
+                </button>
+                <button
+                  onClick={() => setActiveTab('analytics')}
+                  className={`nav-tab ${activeTab === 'analytics' ? 'active' : ''}`}
+                >
+                  <AnalyticsIcon />
+                  Analytics
+                </button>
+              </div>
+
+              {/* Always show market and portfolio, only show staking features when contracts are loaded */}
+              {activeTab === 'market' && (
+                <CryptoMarketDashboard />
+              )}
+              
+              {activeTab === 'portfolio' && (
+                <PortfolioManager 
                   account={account}
+                  user={user}
                 />
-                <StakingInterface 
-                  contracts={contracts}
-                  account={account}
-                />
-              </>
-            )}
-          </>
-        )}
+              )}
+
+              {contracts && (
+                <>
+                  {activeTab === 'stake' && (
+                    <>
+                      <StatsDisplay 
+                        contracts={contracts}
+                        account={account}
+                      />
+                      <StakingInterface 
+                        contracts={contracts}
+                        account={account}
+                      />
+                    </>
+                  )}
+                  
+                  {activeTab === 'pools' && (
+                    <StakingPools 
+                      contracts={contracts}
+                      account={account}
+                    />
+                  )}
+                  
+                  {activeTab === 'analytics' && (
+                    <AnalyticsDashboard 
+                      contracts={contracts}
+                      account={account}
+                    />
+                  )}
+                </>
+              )}
+              
+              {!contracts && (activeTab === 'stake' || activeTab === 'pools' || activeTab === 'analytics') && (
+                <div className="text-center py-16">
+                  <div className="text-4xl mb-4">🔗</div>
+                  <h3 className="text-xl font-semibold mb-2">Connect to Local Network</h3>
+                  <p className="text-secondary mb-6">Start your local Hardhat node to access staking features</p>
+                  <div className="alert alert-info">
+                    <div>
+                      <h4 className="font-semibold mb-2">Getting Started</h4>
+                      <p className="text-sm mb-3">Run the following commands to start the local blockchain:</p>
+                      <div className="bg-gray-900 text-green-400 p-3 rounded font-mono text-sm">
+                        npx hardhat node<br/>
+                        npx hardhat run scripts/deploy.js --network localhost
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
-    </div>
+    </ThemeProvider>
   )
 }
 
