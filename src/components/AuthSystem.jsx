@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react'
 import { ethers } from 'ethers'
 import { toast } from 'react-hot-toast'
 import { useFirebase } from '../contexts/FirebaseContext'
+import { walletAnalytics } from '../services/WalletAnalytics'
+import WalletConnector from './WalletConnector'
 
 const AuthSystem = ({ onAuth, onLogout, user }) => {
-  const [authMode, setAuthMode] = useState('wallet_connect') // Start with wallet connection required
+  const [authMode, setAuthMode] = useState('login') // Start with main auth options
   const [loading, setLoading] = useState(false)
   const [walletConnected, setWalletConnected] = useState(false)
   const [walletData, setWalletData] = useState(null)
@@ -56,16 +58,19 @@ const AuthSystem = ({ onAuth, onLogout, user }) => {
     }
   }
 
-  // Wallet connection handler (first step)
+  // Wallet connection handler - provides immediate platform access
   const handleWalletConnect = async (connectedWalletData) => {
+    const startTime = performance.now()
     setLoading(true)
     
     try {
-      // Store wallet data
-      setWalletData(connectedWalletData)
-      setWalletConnected(true)
+      console.log('🔗 Authenticating with wallet...', {
+        walletType: connectedWalletData.walletType,
+        address: connectedWalletData.address?.slice(0, 6) + '...',
+        chainId: connectedWalletData.chainId
+      })
       
-      // Create wallet-only authentication data
+      // Create complete authentication data for immediate platform access
       const walletAuthData = {
         address: connectedWalletData.address,
         walletType: connectedWalletData.walletType,
@@ -74,19 +79,39 @@ const AuthSystem = ({ onAuth, onLogout, user }) => {
         signer: connectedWalletData.signer,
         timestamp: Date.now(),
         isAuthenticated: true,
-        walletOnly: true, // Flag to indicate this is wallet-only auth
-        username: `User_${connectedWalletData.address.slice(0, 6)}`, // Default username
-        firebaseUser: null // No Firebase user initially
+        authMethod: 'wallet', // Specify this is wallet-only authentication
+        walletOnly: true, // This is crucial for the AccountManager to work correctly
+        username: `Trader_${connectedWalletData.address.slice(-6).toUpperCase()}`, // Friendly default username
+        firebaseUser: null, // No Firebase user - pure wallet auth
+        canUpgradeAccount: true // Allow optional email upgrade later
       }
       
-      toast.success(`${connectedWalletData.walletType} connected! Welcome to the platform!`)
+      const totalTime = performance.now() - startTime
+      console.log(`🎉 Wallet authentication completed in ${Math.round(totalTime)}ms`)
+      console.log('Auth data:', walletAuthData)
       
-      // Grant immediate access to all features
+      // Emit performance metric
+      if (window.emitPerformanceMetric) {
+        window.emitPerformanceMetric('Wallet Authentication', totalTime, 'wallet');
+      }
+      
+      toast.success(`Welcome! ${connectedWalletData.walletType} connected successfully. You now have full access to the platform!`)
+      
+      // Grant immediate complete access to all platform features
+      console.log('Calling onAuth with wallet data...')
       onAuth(walletAuthData)
+      console.log('onAuth called successfully')
+      
+      // Track wallet connection analytics (non-blocking)
+      walletAnalytics.trackWalletConnection(connectedWalletData).catch(err => {
+        console.warn('Analytics tracking failed (non-critical):', err)
+      })
       
     } catch (error) {
-      console.error('Wallet connection error:', error)
-      toast.error(error.message || 'Failed to connect wallet')
+      const totalTime = performance.now() - startTime
+      console.error(`❌ Wallet authentication failed after ${Math.round(totalTime)}ms:`, error)
+      console.error('Error details:', error.stack)
+      toast.error(error.message || 'Failed to authenticate with wallet')
     } finally {
       setLoading(false)
     }
@@ -301,9 +326,14 @@ const AuthSystem = ({ onAuth, onLogout, user }) => {
   }
 
   const handleWalletSignup = async (walletData) => {
-    // For wallet signup, user must first create account with email
-    toast.error('Please create an account with email first, then connect your wallet')
-    setAuthMode('email_signup')
+    // Direct wallet authentication - no email required
+    console.log('🚀 handleWalletSignup called with:', walletData)
+    try {
+      await handleWalletConnect(walletData)
+    } catch (error) {
+      console.error('❌ handleWalletSignup error:', error)
+      throw error
+    }
   }
 
   const updateProfile = async () => {
@@ -333,6 +363,11 @@ const AuthSystem = ({ onAuth, onLogout, user }) => {
 
   const handleLogout = async () => {
     try {
+      // Track wallet disconnection if there's wallet data
+      if (walletData?.address && walletData?.sessionId) {
+        await walletAnalytics.trackWalletDisconnection(walletData.address, walletData.sessionId)
+      }
+      
       await firebaseLogout()
       onLogout()
       setUserData({
@@ -347,6 +382,10 @@ const AuthSystem = ({ onAuth, onLogout, user }) => {
           news: false
         }
       })
+      
+      // Reset wallet data
+      setWalletData(null)
+      setWalletConnected(false)
     } catch (error) {
       console.error('Logout error:', error)
     }
@@ -568,9 +607,11 @@ const AuthSystem = ({ onAuth, onLogout, user }) => {
                 Select your preferred wallet to connect to the platform
               </p>
 
-              <WalletConnectorAuth 
+              <WalletConnector 
                 onConnect={handleWalletConnect}
-                loading={loading}
+                onDisconnect={() => {}}
+                currentWallet={null}
+                account={null}
               />
             </div>
           ) : (
@@ -837,16 +878,20 @@ const AuthSystem = ({ onAuth, onLogout, user }) => {
             <div className="feature-icon mx-auto mb-4" style={{ backgroundColor: '#f59e0b20', color: '#f59e0b' }}>
               👛
             </div>
-            <h3 className="text-xl font-semibold mb-2">Quick Wallet Access</h3>
+            <h3 className="text-xl font-semibold mb-2">Wallet Authentication</h3>
             <p className="text-secondary mb-6">
-              Connect wallet for basic features (limited functionality)
+              Connect your wallet for instant access to all platform features
             </p>
             
             <button
-              onClick={() => setAuthMode('signup')}
-              className="btn-enhanced btn-secondary-enhanced btn-medium"
+              onClick={() => {
+                console.log('💆 Connect Wallet button clicked!')
+                setAuthMode('signup')
+                console.log('Auth mode set to:', 'signup')
+              }}
+              className="btn-enhanced btn-primary-enhanced btn-medium"
             >
-              🚀 Quick Start
+              🔗 Connect Wallet
             </button>
           </div>
         </div>
@@ -861,161 +906,18 @@ const AuthSystem = ({ onAuth, onLogout, user }) => {
             </div>
             <h3 className="text-xl font-semibold mb-2">Connect Your Wallet</h3>
             <p className="text-secondary mb-6">
-              Quick access - create an email account later for full features
+              Choose your wallet to get instant access to all platform features
             </p>
 
-            <WalletConnectorAuth 
+            <WalletConnector 
               onConnect={handleWalletSignup}
-              loading={loading}
+              onDisconnect={() => {}}
+              currentWallet={null}
+              account={null}
             />
           </div>
         </div>
       )}
-    </div>
-  )
-}
-
-// Simplified wallet connector for auth
-const WalletConnectorAuth = ({ onConnect, loading }) => {
-  const [connecting, setConnecting] = useState(null)
-
-  const wallets = [
-    { id: 'metamask', name: 'MetaMask', icon: '🦊', color: '#f6851b' },
-    { id: 'binance', name: 'Binance Wallet', icon: '🟡', color: '#f3ba2f' },
-    { id: 'trust', name: 'Trust Wallet', icon: '🛡️', color: '#3375bb' },
-    { id: 'coinbase', name: 'Coinbase Wallet', icon: '🔵', color: '#0052ff' }
-  ]
-
-  const handleConnect = async (walletId) => {
-    const startTime = performance.now()
-    setConnecting(walletId)
-    
-    try {
-      console.log(`🔗 Starting ${walletId} connection...`)
-      let provider = null
-      let requestStartTime
-
-      switch (walletId) {
-        case 'metamask':
-          if (!window.ethereum?.isMetaMask) {
-            throw new Error('MetaMask is not installed. Please install MetaMask first.')
-          }
-          requestStartTime = performance.now()
-          await window.ethereum.request({ method: 'eth_requestAccounts' })
-          console.log(`✅ MetaMask accounts requested (${Math.round(performance.now() - requestStartTime)}ms)`)
-          provider = new ethers.BrowserProvider(window.ethereum)
-          break
-
-        case 'binance':
-          if (!window.BinanceChain) {
-            throw new Error('Binance Wallet is not installed. Please install Binance Chain Wallet first.')
-          }
-          requestStartTime = performance.now()
-          await window.BinanceChain.request({ method: 'eth_requestAccounts' })
-          console.log(`✅ Binance Wallet accounts requested (${Math.round(performance.now() - requestStartTime)}ms)`)
-          provider = new ethers.BrowserProvider(window.BinanceChain)
-          break
-
-        case 'trust':
-          if (!window.ethereum?.isTrust) {
-            throw new Error('Trust Wallet is not installed. Please install Trust Wallet first.')
-          }
-          requestStartTime = performance.now()
-          await window.ethereum.request({ method: 'eth_requestAccounts' })
-          console.log(`✅ Trust Wallet accounts requested (${Math.round(performance.now() - requestStartTime)}ms)`)
-          provider = new ethers.BrowserProvider(window.ethereum)
-          break
-
-        case 'coinbase':
-          if (!window.ethereum?.isCoinbaseWallet) {
-            throw new Error('Coinbase Wallet is not installed. Please install Coinbase Wallet first.')
-          }
-          requestStartTime = performance.now()
-          await window.ethereum.request({ method: 'eth_requestAccounts' })
-          console.log(`✅ Coinbase Wallet accounts requested (${Math.round(performance.now() - requestStartTime)}ms)`)
-          provider = new ethers.BrowserProvider(window.ethereum)
-          break
-
-        default:
-          throw new Error(`${walletId} wallet is not supported`)
-      }
-
-      const providerStartTime = performance.now()
-      const signer = await provider.getSigner()
-      const [address, network] = await Promise.all([
-        signer.getAddress(),
-        provider.getNetwork()
-      ])
-      console.log(`✅ Provider initialized (${Math.round(performance.now() - providerStartTime)}ms)`)
-
-      const walletData = {
-        provider,
-        signer,
-        address,
-        chainId: Number(network.chainId),
-        walletType: walletId
-      }
-
-      await onConnect(walletData)
-      
-      const totalTime = performance.now() - startTime
-      console.log(`🎉 ${walletId} connected successfully in ${Math.round(totalTime)}ms`)
-      
-      // Emit performance metric
-      if (window.emitPerformanceMetric) {
-        window.emitPerformanceMetric(`${walletId} Connection`, totalTime, 'wallet');
-      }
-
-    } catch (error) {
-      const totalTime = performance.now() - startTime
-      console.error(`❌ ${walletId} connection failed after ${Math.round(totalTime)}ms:`, error)
-      
-      // Enhanced error messages
-      let errorMessage = error.message || 'Failed to connect wallet'
-      
-      if (error.code === 4001) {
-        errorMessage = 'Connection request was rejected. Please try again.'
-      } else if (error.code === -32002) {
-        errorMessage = 'Connection request is pending. Please check your wallet.'
-      } else if (error.message.includes('not installed')) {
-        errorMessage = error.message
-      } else if (error.message.includes('User rejected')) {
-        errorMessage = 'Connection cancelled by user'
-      }
-      
-      toast.error(errorMessage)
-    } finally {
-      setConnecting(null)
-    }
-  }
-
-  return (
-    <div className="responsive-grid-2 gap-4">
-      {wallets.map(wallet => {
-        const isConnecting = connecting === wallet.id
-
-        return (
-          <button
-            key={wallet.id}
-            onClick={() => handleConnect(wallet.id)}
-            disabled={loading || isConnecting}
-            className="feature-card text-center hover:scale-105 transition-transform cursor-pointer border-0"
-          >
-            <div 
-              className="feature-icon mx-auto mb-3"
-              style={{ backgroundColor: wallet.color + '20', color: wallet.color }}
-            >
-              <span className="text-2xl">{wallet.icon}</span>
-            </div>
-            <h4 className="font-semibold mb-2">{wallet.name}</h4>
-            {(loading || isConnecting) ? (
-              <div className="loading-enhanced mx-auto"></div>
-            ) : (
-              <span className="text-sm text-gradient-primary">Click to connect</span>
-            )}
-          </button>
-        )
-      })}
     </div>
   )
 }

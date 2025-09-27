@@ -14,12 +14,18 @@ import AnalyticsDashboard from './components/AnalyticsDashboard'
 import StakingPools from './components/StakingPools'
 import PortfolioManager from './components/PortfolioManager'
 import AuthSystem from './components/AuthSystem'
-import CryptoMarketDashboard from './components/CryptoMarketDashboard'
 import AccountManager from './components/AccountManager'
+import AdminDashboard from './components/AdminDashboard'
+import TestComponent from './components/TestComponent'
+import CryptoMarketDashboard from './components/CryptoMarketDashboard'
+import FirebaseDebug from './components/FirebaseDebug'
+import PerformanceMonitor from './components/PerformanceMonitor'
+import SecurityEducation from './components/SecurityEducation'
 import './professional-theme.css'
 import './modern-tech-theme.css'
 import './futuristic-theme.css'
 import './ui-enhancements.css'
+import './mobile-responsive.css'
 
 function App() {
   const [provider, setProvider] = useState(null)
@@ -185,8 +191,15 @@ function App() {
   }
 
   const handleAuthentication = (authData) => {
+    console.log('🚀 App.jsx: handleAuthentication called with:', authData)
+    console.log('Auth data isAuthenticated:', authData.isAuthenticated)
+    console.log('Auth data authMethod:', authData.authMethod)
+    
     setUser(authData)
+    console.log('✅ User state updated')
+    
     if (authData.provider && authData.signer) {
+      console.log('🔗 Setting up provider and signer...')
       setProvider(authData.provider)
       setSigner(authData.signer)
       setAccount(authData.address)
@@ -194,7 +207,10 @@ function App() {
       setWalletType(authData.walletType)
       // Load contracts after authentication
       loadContracts(authData.provider, authData.signer)
+      console.log('✅ Provider and contracts loading initiated')
     }
+    
+    console.log('🎉 Authentication completed, user should now have access!')
   }
 
   const handleLogout = () => {
@@ -273,6 +289,12 @@ function App() {
     </svg>
   )
 
+  const AdminIcon = () => (
+    <svg className="nav-tab-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+    </svg>
+  )
+
   return (
     <ThemeProvider>
       <FirebaseProvider>
@@ -321,7 +343,13 @@ function App() {
             </p>
           </header>
 
-          {!user || !user.isAuthenticated ? (
+          {(() => {
+            console.log('🔍 Auth check - user:', user)
+            console.log('🔍 Auth check - user.isAuthenticated:', user?.isAuthenticated)
+            const shouldShowAuth = !user || !user.isAuthenticated
+            console.log('🔍 shouldShowAuth:', shouldShowAuth)
+            return shouldShowAuth
+          })() ? (
             <AuthSystem 
               onAuth={handleAuthentication}
               onLogout={handleLogout}
@@ -414,6 +442,19 @@ function App() {
                   <AnalyticsIcon />
                   Analytics
                 </button>
+                <button
+                  onClick={() => setActiveTab('admin')}
+                  className={`nav-tab ${activeTab === 'admin' ? 'active' : ''}`}
+                >
+                  <AdminIcon />
+                  Admin
+                </button>
+                <button
+                  onClick={() => setActiveTab('security')}
+                  className={`nav-tab ${activeTab === 'security' ? 'active' : ''}`}
+                >
+                  🏭 Security
+                </button>
               </div>
 
               {/* Account Manager */}
@@ -423,6 +464,19 @@ function App() {
                   onAccountCreated={handleAuthentication}
                   onClose={() => setActiveTab('market')}
                 />
+              )}
+
+              {/* Admin Dashboard */}
+              {activeTab === 'admin' && (
+                <AdminDashboard 
+                  currentUser={user}
+                  onClose={() => setActiveTab('market')}
+                />
+              )}
+
+              {/* Security Education */}
+              {activeTab === 'security' && (
+                <SecurityEducation user={user} />
               )}
 
               {/* Always show market and portfolio, only show staking features when contracts are loaded */}

@@ -3,6 +3,8 @@ import { toast } from 'react-hot-toast'
 import { useFirebase } from '../contexts/FirebaseContext'
 
 const AccountManager = ({ user, onAccountCreated, onClose }) => {
+  console.log('🎯 AccountManager component loaded', { user, onAccountCreated, onClose })
+  console.log('AccountManager received user:', user)
   const [isCreatingAccount, setIsCreatingAccount] = useState(false)
   const [userData, setUserData] = useState({
     username: '',
@@ -98,8 +100,52 @@ const AccountManager = ({ user, onAccountCreated, onClose }) => {
     }
   }
 
-  if (!user?.walletOnly) {
-    return (
+  // Debug info
+  console.log('User walletOnly status:', user?.walletOnly)
+  console.log('User has email:', !!user?.email)
+  
+  // Add error boundary protection
+  const renderWithErrorBoundary = (content) => {
+    try {
+      return content
+    } catch (error) {
+      console.error('AccountManager render error:', error)
+      return (
+        <div className="alert alert-error">
+          <h3>⚠️ Account Manager Error</h3>
+          <p>There was an issue loading the account manager.</p>
+          <button onClick={onClose} className="btn-enhanced btn-secondary-enhanced btn-small mt-2">
+            ← Back
+          </button>
+        </div>
+      )
+    }
+  }
+
+  if (!user) {
+    return renderWithErrorBoundary(
+      <div className="feature-card">
+        <div className="text-center">
+          <div className="feature-icon mx-auto mb-4" style={{ backgroundColor: '#f59e0b20', color: '#f59e0b' }}>
+            ⚠️
+          </div>
+          <h3 className="text-xl font-semibold mb-2">Connect Wallet First</h3>
+          <p className="text-secondary mb-4">
+            Please connect your wallet before creating an account.
+          </p>
+          <button 
+            onClick={onClose}
+            className="btn-enhanced btn-secondary-enhanced btn-small"
+          >
+            ← Back
+          </button>
+        </div>
+      </div>
+    )
+  }
+  
+  if (user.email && !user.walletOnly) {
+    return renderWithErrorBoundary(
       <div className="feature-card">
         <div className="text-center">
           <div className="feature-icon mx-auto mb-4" style={{ backgroundColor: '#10b98120', color: '#10b981' }}>
@@ -114,12 +160,18 @@ const AccountManager = ({ user, onAccountCreated, onClose }) => {
             <div><strong>Email:</strong> {user.email}</div>
             <div><strong>Wallet:</strong> {user.address?.slice(0, 6)}...{user.address?.slice(-4)}</div>
           </div>
+          <button 
+            onClick={onClose}
+            className="btn-enhanced btn-secondary-enhanced btn-small mt-4"
+          >
+            ← Back
+          </button>
         </div>
       </div>
     )
   }
 
-  return (
+  return renderWithErrorBoundary(
     <div className="max-w-2xl mx-auto">
       <div className="section-header mb-8">
         <h2 className="section-title">🎯 Create Your Account</h2>
