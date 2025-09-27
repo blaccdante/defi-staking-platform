@@ -6,6 +6,40 @@ const WalletConnector = ({ onConnect, onDisconnect, currentWallet, account }) =>
   const [connecting, setConnecting] = useState(null)
   const [installedWallets, setInstalledWallets] = useState({})
 
+  // Mobile detection utility
+  const isMobile = () => {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+  }
+
+  // Enhanced wallet detection for mobile compatibility
+  const detectMetaMask = () => {
+    if (typeof window.ethereum === 'undefined') return false
+    
+    // Desktop detection
+    if (window.ethereum.isMetaMask) return true
+    
+    // Mobile detection - check user agent for MetaMask
+    const userAgent = navigator.userAgent || navigator.vendor || window.opera
+    
+    // Check if we're in MetaMask mobile browser
+    if (userAgent.includes('MetaMaskMobile')) return true
+    
+    // Mobile detection - MetaMask mobile injects ethereum but may not have isMetaMask
+    if (isMobile() && typeof window.ethereum !== 'undefined') {
+      // Additional checks for MetaMask mobile
+      if (window.ethereum._metamask || 
+          window.ethereum.selectedAddress || 
+          (window.ethereum.providers && window.ethereum.providers.find(p => p.isMetaMask))) {
+        return true
+      }
+      
+      // Generic ethereum provider on mobile - could be MetaMask
+      return true
+    }
+    
+    return false
+  }
+
   // Wallet configurations
   const wallets = [
     {
@@ -15,7 +49,7 @@ const WalletConnector = ({ onConnect, onDisconnect, currentWallet, account }) =>
       color: '#f6851b',
       popular: true,
       downloadUrl: 'https://metamask.io/',
-      detect: () => typeof window.ethereum !== 'undefined' && window.ethereum.isMetaMask
+      detect: detectMetaMask
     },
     {
       id: 'binance',
@@ -43,6 +77,16 @@ const WalletConnector = ({ onConnect, onDisconnect, currentWallet, account }) =>
       popular: true,
       downloadUrl: 'https://wallet.coinbase.com/',
       detect: () => typeof window.ethereum !== 'undefined' && window.ethereum.isCoinbaseWallet
+    },
+    {
+      id: 'mobile-metamask',
+      name: 'MetaMask Mobile',
+      icon: '📱',
+      color: '#f6851b',
+      popular: isMobile(),
+      downloadUrl: 'https://metamask.io/download/',
+      detect: () => isMobile() && !detectMetaMask(),
+      mobileOnly: true
     },
     {
       id: 'walletconnect',
@@ -103,13 +147,45 @@ const WalletConnector = ({ onConnect, onDisconnect, currentWallet, account }) =>
 
       switch (walletId) {
         case 'metamask':
-          if (!window.ethereum?.isMetaMask) {
-            throw new Error('MetaMask not installed')
+          if (!detectMetaMask()) {
+            if (isMobile()) {
+              // On mobile, direct user to open in MetaMask app
+              const currentUrl = window.location.href
+              const metamaskUrl = `https://metamask.app.link/dapp/${window.location.host}${window.location.pathname}`
+              toast.error('Please open this page in the MetaMask mobile app')
+              setTimeout(() => {
+                window.open(metamaskUrl, '_blank')
+              }, 2000)
+              return
+            } else {
+              throw new Error('MetaMask not installed')
+            }
           }
           await window.ethereum.request({ method: 'eth_requestAccounts' })
           provider = new ethers.BrowserProvider(window.ethereum)
           accounts = await provider.listAccounts()
           break
+
+        case 'mobile-metamask':
+          // Mobile MetaMask deep link
+          const currentUrl = window.location.href
+          const metamaskUrl = `https://metamask.app.link/dapp/${window.location.host}${window.location.pathname}`
+          
+          toast.success('Opening MetaMask app...', { duration: 3000 })
+          
+          // Try to open MetaMask app
+          window.location.href = metamaskUrl
+          
+          // Fallback - open in new tab after delay
+          setTimeout(() => {
+            if (document.hasFocus()) {
+              // If still focused, MetaMask didn't open, show instructions
+              toast.error('Please install MetaMask mobile app first')
+              window.open('https://metamask.io/download/', '_blank')
+            }
+          }, 3000)
+          
+          return
 
         case 'binance':
           if (!window.BinanceChain) {
@@ -190,9 +266,44 @@ const WalletConnector = ({ onConnect, onDisconnect, currentWallet, account }) =>
     window.open(wallet.downloadUrl, '_blank', 'noopener,noreferrer')
   }
 
-  if (currentWallet && account) {
+  // Mobile instructions component
+  const MobileInstructions = () => {
+    if (!isMobile()) return null
+    
     return (
-      <div className="feature-card">
+      <div className="feature-card mb-6" style={{
+        background: 'linear-gradient(135deg, #3b82f608 0%, #10b98108 100%)',
+        border: '2px solid #3b82f615'
+      }}>
+        <div className="flex items-center gap-3 mb-4">
+          <div className="text-2xl">📱</div>
+          <h4 className="font-semibold text-primary">Mobile Wallet Connection</h4>
+        </div>
+        <div className="space-y-3 text-sm text-secondary">
+          <div className="flex items-start gap-2">
+            <span className="text-blue-500 font-bold">1.</span>
+            <span>If you have MetaMask mobile installed, it should be detected automatically</span>
+          </div>
+          <div className="flex items-start gap-2">
+            <span className="text-blue-500 font-bold">2.</span>
+            <span>If not detected, try refreshing this page after opening it in your wallet's browser</span>
+          </div>
+          <div className="flex items-start gap-2">
+            <span className="text-blue-500 font-bold">3.</span>
+            <span>Alternatively, copy this URL and paste it in your wallet's DApp browser</span>
+          </div>
+        </div>
+        <div className="mt-4 p-2 bg-gray-800 rounded text-xs font-mono text-green-400 break-all">
+          {window.location.href}
+        </div>
+      </div>
+    )
+  }
+
+  if (currentWallet && account) {
+
+  return (
+    <div className="wallet-connector-container">
         <div className="text-center mb-4">
           <div className="text-4xl mb-2">✅</div>
           <h3 className="form-title">Wallet Connected</h3>
@@ -235,6 +346,8 @@ const WalletConnector = ({ onConnect, onDisconnect, currentWallet, account }) =>
           Choose from our supported wallets to connect to the DeFi platform
         </p>
       </div>
+      
+      <MobileInstructions />
 
       {/* Popular Wallets */}
       <div className="mb-8">
